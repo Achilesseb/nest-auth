@@ -25,7 +25,7 @@ services:
       - database
     volumes:
       - .:/usr/src/app
-      - /usr/src/app/node_module
+      - /usr/src/app/node_modules
 
   pgadmin:
     image: dpage/pgadmin4
