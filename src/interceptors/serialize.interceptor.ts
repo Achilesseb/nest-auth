@@ -6,7 +6,7 @@ import { UseInterceptors } from '@nestjs/common';
 //Serilizer to exclude users sensitive information before returning the response.
 
 interface ClassConstructor {
-  new (...args: any[]): Record<string, unknown>;
+  new (...args: any[]): Record<string, any>;
 }
 export function Serialize(dto: ClassConstructor) {
   return UseInterceptors(new SerializeInterceptor(dto));
