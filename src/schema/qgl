@@ -3,14 +3,14 @@
 # ------------------------------------------------------
 
 input CreateUserInput {
-  """Example field (placeholder)"""
-  id: Int!
+  email: String!
   password: String!
   username: String!
 }
 
 type Mutation {
   createUser(createUserInput: CreateUserInput!): User!
+  signUp(signUp: CreateUserInput!): User!
 }
 
 type Query {

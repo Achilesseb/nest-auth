@@ -5,7 +5,10 @@ import { UseInterceptors } from '@nestjs/common';
 
 //Serilizer to exclude users sensitive information before returning the response.
 
-export function Serialize(dto: any) {
+interface ClassConstructor {
+  new (...args: any[]): Record<string, unknown>;
+}
+export function Serialize(dto: ClassConstructor) {
   return UseInterceptors(new SerializeInterceptor(dto));
 }
 export class SerializeInterceptor implements NestInterceptor {

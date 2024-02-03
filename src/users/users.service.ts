@@ -12,16 +12,11 @@ export class UsersService {
     @InjectRepository(User) private usersRepository: Repository<User>,
   ) {}
   async create(createUserInput: CreateUserInput) {
-    const newUser = {
-      id: uuidv4(),
-      username: createUserInput.username,
-      password: await bcrypt.hash(createUserInput.password, '12'),
-    };
-    this.usersRepository.create(newUser);
+    this.usersRepository.create(createUserInput);
     return 'This action adds a new user';
   }
   findAll() {
-    return `This action returns all users`;
+    return this.usersRepository.find() ?? [];
   }
   findOne(username: string) {
     return this.usersRepository.findOneBy({ username });
