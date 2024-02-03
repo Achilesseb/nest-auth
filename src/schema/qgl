@@ -2,28 +2,39 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
+type AuthSession {
+  token: String!
+  user: User!
+}
+
 input CreateUserInput {
   email: String!
+  name: String!
   password: String!
-  username: String!
 }
 
 type Mutation {
   createUser(createUserInput: CreateUserInput!): User!
+  signIn(signIn: SignInInput!): AuthSession!
   signUp(signUp: CreateUserInput!): User!
 }
 
 type Query {
-  users: [User!]!
+  getAllUsers: [User!]!
+}
+
+input SignInInput {
+  email: String!
+  password: String!
 }
 
 type User {
   """Example field (placeholder)"""
-  id: String!
+  email: String!
+
+  """Example field (placeholder)"""
+  name: String!
 
   """Example field (placeholder)"""
   password: String!
-
-  """Example field (placeholder)"""
-  username: String!
 }
