@@ -6,7 +6,7 @@ services:
     restart: always
     environment:
       - POSTGRES_PASSWORD=postgres
-    container_name: gorilla_advertising_DB
+    container_name: nest_auth_DB
     volumes:
       - ./pgdata:/var/lib/postgresql/data
     ports:
@@ -16,7 +16,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: gorilla_advertising
+    container_name: nest_auth
     environment:
       - PORT=${PORT}
     ports:
