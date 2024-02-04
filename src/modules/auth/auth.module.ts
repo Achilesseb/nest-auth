@@ -1,14 +1,14 @@
 import { Module } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthResolver } from './auth.resolver';
-import { UsersService } from 'src/users/users.service';
+import { UsersService } from 'src/modules/users/users.service';
 import { JwtModule, JwtService } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { User } from 'src/users/entities/user.entity';
+import { User } from 'src/modules/users/entities/user.entity';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { PassportModule } from '@nestjs/passport';
-import { JWTStrategy } from './strategy/jwt.strategy';
-import { LocalStrategy } from './strategy/local.strategy';
+import { LocalStrategy } from './strategies/local.strategy';
+import { JWTStrategy } from './strategies/jwt.strategy';
 
 @Module({
   imports: [
@@ -19,7 +19,7 @@ import { LocalStrategy } from './strategy/local.strategy';
       inject: [ConfigService],
       useFactory: async (configService: ConfigService) => ({
         signOptions: {
-          expiresIn: '128h',
+          expiresIn: configService.get('JWT_EXPIRY'),
         },
         secret: configService.get('JWT_SECRET'),
       }),

@@ -2,24 +2,27 @@ import {
   BadRequestException,
   Injectable,
   InternalServerErrorException,
+  UnauthorizedException,
 } from '@nestjs/common';
-import { UsersService } from 'src/users/users.service';
+import { UsersService } from 'src/modules/users/users.service';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { v4 as uuidv4 } from 'uuid';
 import { ERROR_MESSAGES } from 'src/constants/errors';
-import { User } from 'src/users/entities/user.entity';
+import { User } from 'src/modules/users/entities/user.entity';
+import { ConfigService } from '@nestjs/config';
+import { SingUpInput } from './dto/signIn.input';
 
 @Injectable()
 export class AuthService {
   constructor(
     private usersService: UsersService,
     private jwtService: JwtService,
+    private configService: ConfigService,
   ) {}
 
-  async signUp(args) {
+  async signUp(args: SingUpInput) {
     const { name, password, email } = args;
-    console.log(args);
     const user = await this.usersService.findOne(email);
 
     if (user) {
@@ -37,10 +40,15 @@ export class AuthService {
   }
 
   async signIn(user: User) {
-    const token = this.jwtService.sign({
-      id: user.id,
-      name: user.name,
-    });
+    const token = this.jwtService.sign(
+      {
+        email: user.email,
+        name: user.name,
+      },
+      {
+        secret: this.configService.get('JWT_SECRET'),
+      },
+    );
 
     if (!token) {
       throw new InternalServerErrorException();
@@ -62,7 +70,9 @@ export class AuthService {
     const { password: userPassword, ...userReturnData } = user;
     const match = bcrypt.compare(password, userPassword);
 
-    if (!match) return null;
+    if (!match) {
+      throw new UnauthorizedException({ message: 'Wrong credentials!' });
+    }
 
     return userReturnData;
   }

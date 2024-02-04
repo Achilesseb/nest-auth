@@ -14,7 +14,6 @@ input CreateUserInput {
 }
 
 type Mutation {
-  createUser(createUserInput: CreateUserInput!): User!
   signIn(signIn: SignInInput!): AuthSession!
   signUp(signUp: CreateUserInput!): User!
 }
