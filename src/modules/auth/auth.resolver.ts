@@ -5,10 +5,14 @@ import { AuthService } from './auth.service';
 import { AuthSession, SignInInput } from './dto/signIn.input';
 import { UseGuards } from '@nestjs/common';
 import { GraphQLAuthGuard } from './guards/gql-auth.guard';
+import { ConfigService } from '@nestjs/config';
 
 @Resolver()
 export class AuthResolver {
-  constructor(private authService: AuthService) {}
+  constructor(
+    private authService: AuthService,
+    private configService: ConfigService,
+  ) {}
   @Mutation(() => User)
   signUp(@Args('signUp') args: CreateUserInput) {
     return this.authService.signUp(args);
@@ -16,7 +20,13 @@ export class AuthResolver {
 
   @Mutation(() => AuthSession)
   @UseGuards(GraphQLAuthGuard)
-  signIn(@Args('signIn') _args: SignInInput, @Context() context) {
-    return this.authService.signIn(context.user);
+  async signIn(@Args('signIn') _args: SignInInput, @Context() context) {
+    const { token, refreshToken } = await this.authService.signIn(context.user);
+
+    this.authService.setCookies(context, { token, refreshToken });
+
+    return {
+      user: context.user,
+    };
   }
 }

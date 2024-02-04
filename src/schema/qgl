@@ -3,7 +3,6 @@
 # ------------------------------------------------------
 
 type AuthSession {
-  token: String!
   user: User!
 }
 

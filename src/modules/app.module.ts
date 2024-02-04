@@ -22,6 +22,9 @@ import { AuthService } from './auth/auth.service';
       autoSchemaFile: join(process.cwd(), 'src/schema/qgl'),
       sortSchema: true,
       driver: ApolloDriver,
+      context: ({ res, req }) => {
+        return { res, req };
+      },
     }),
     UsersModule,
     AuthModule,

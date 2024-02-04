@@ -24,7 +24,4 @@ export class SingUpInput extends SignInInput {
 export class AuthSession {
   @Field()
   user: User;
-
-  @Field()
-  token: string;
 }
