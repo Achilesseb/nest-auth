@@ -2,6 +2,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
+import { DUMMY_ENUMS } from 'src/constants/dummyVariables';
 import { UsersService } from 'src/modules/users/users.service';
 
 @Injectable()
@@ -13,7 +14,7 @@ export class JWTStrategy extends PassportStrategy(Strategy, 'jwt') {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: configService.get('JWT_SECRET'),
+      secretOrKey: configService.get(DUMMY_ENUMS.JWT_SECRET),
     });
   }
 

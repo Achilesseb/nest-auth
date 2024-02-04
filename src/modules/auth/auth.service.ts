@@ -13,6 +13,7 @@ import { ERROR_MESSAGES } from 'src/constants/errors';
 import { User } from 'src/modules/users/entities/user.entity';
 import { ConfigService } from '@nestjs/config';
 import { SingUpInput } from './dto/signIn.input';
+import { DUMMY_ENUMS } from 'src/constants/dummyVariables';
 
 @Injectable()
 export class AuthService {
@@ -22,37 +23,21 @@ export class AuthService {
     private configService: ConfigService,
   ) {}
 
-  async createAccessToken(userId: string) {
+  private async createAccessToken(userId: string) {
     return this.jwtService.sign(
       { id: userId },
       {
-        expiresIn: this.configService.get('JWT_ACCESS_EXPIRY'),
-        secret: this.configService.get('JWT_SECRET'),
+        expiresIn: this.configService.get(DUMMY_ENUMS.JWT_ACCESS_EXPIRY),
+        secret: this.configService.get(DUMMY_ENUMS.JWT_SECRET),
       },
     );
   }
 
-  async createRefreshToken(userId: string) {
-    const tokenId = crypto.createHash('sha256');
+  private async createRefreshToken(userId: string) {
+    const tokenId = crypto.createHash(
+      this.configService.get(DUMMY_ENUMS.HASH_ALGORITHM),
+    );
     return tokenId.update(userId).digest('hex');
-  }
-
-  setCookies(context, { token, refreshToken }) {
-    context.res.cookie('access_token', token, {
-      expires: new Date(
-        Date.now() - -this.configService.get('COOKIE_ACCESS_EXPIRY'),
-      ),
-      sameSite: true,
-      httpOnly: true,
-    });
-
-    context.res.cookie('refresh_token', refreshToken, {
-      expires: new Date(
-        Date.now() - -this.configService.get('COOKIE_REFRESH_EXPIRY'),
-      ),
-      sameSite: true,
-      httpOnly: true,
-    });
   }
 
   async signUp(args: SingUpInput) {
@@ -96,12 +81,36 @@ export class AuthService {
     }
 
     const { password: userPassword, ...userReturnData } = user;
-    const match = bcrypt.compare(password, userPassword);
+    const match = await bcrypt.compare(password, userPassword);
 
     if (!match) {
-      throw new UnauthorizedException({ message: 'Wrong credentials!' });
+      throw new UnauthorizedException({
+        message: ERROR_MESSAGES.WRONG_CREDENTIALS,
+      });
     }
 
     return userReturnData;
+  }
+
+  async setCookies(context) {
+    const { token, refreshToken, user } = await this.signIn(context.user);
+
+    context.res.cookie(DUMMY_ENUMS.ACCESS_TOKEN, token, {
+      expires: new Date(
+        Date.now() - -this.configService.get(DUMMY_ENUMS.COOKIE_ACCESS_EXPIRY),
+      ),
+      sameSite: true,
+      httpOnly: true,
+    });
+
+    context.res.cookie(DUMMY_ENUMS.REFRESH_TOKEN, refreshToken, {
+      expires: new Date(
+        Date.now() - -this.configService.get(DUMMY_ENUMS.COOKIE_REFRESH_EXPIRY),
+      ),
+      sameSite: true,
+      httpOnly: true,
+    });
+
+    return user;
   }
 }
