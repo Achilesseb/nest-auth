@@ -6,4 +6,5 @@ export enum DUMMY_ENUMS {
   JWT_ACCESS_EXPIRY = 'JWT_ACCESS_EXPIRY',
   ACCESS_TOKEN = 'access_token',
   REFRESH_TOKEN = 'refresh_token',
+  HASH_ROUNDS = 'HASH_ROUNDS',
 }

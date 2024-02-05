@@ -1,8 +1,8 @@
-import { Module, Global } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from 'src/modules/users/entities/user.entity';
+import { Token } from '../auth/entities/token.entity';
 
-@Global()
 @Module({
   imports: [
     TypeOrmModule.forRootAsync({
@@ -15,7 +15,7 @@ import { User } from 'src/modules/users/entities/user.entity';
         database: process.env.DATABASE_NAME,
         synchronize: true,
         autoLoadEntities: true,
-        entities: [User],
+        entities: [User, Token],
       }),
     }),
   ],

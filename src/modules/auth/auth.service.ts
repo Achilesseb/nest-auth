@@ -8,24 +8,30 @@ import { UsersService } from 'src/modules/users/users.service';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
 import { JwtService } from '@nestjs/jwt';
-import { v4 as uuidv4 } from 'uuid';
 import { ERROR_MESSAGES } from 'src/constants/errors';
 import { User } from 'src/modules/users/entities/user.entity';
 import { ConfigService } from '@nestjs/config';
 import { SingUpInput } from './dto/signIn.input';
 import { DUMMY_ENUMS } from 'src/constants/dummyVariables';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Token } from './entities/token.entity';
+import { Repository } from 'typeorm';
+import { GraphQLExecutionContext } from '@nestjs/graphql';
+import { Response } from 'express';
 
 @Injectable()
 export class AuthService {
   constructor(
+    @InjectRepository(Token)
+    private usersTokensRepository: Repository<Token>,
     private usersService: UsersService,
     private jwtService: JwtService,
     private configService: ConfigService,
   ) {}
 
-  private async createAccessToken(userId: string) {
+  private async createAccessToken(email: string) {
     return this.jwtService.sign(
-      { id: userId },
+      { email },
       {
         expiresIn: this.configService.get(DUMMY_ENUMS.JWT_ACCESS_EXPIRY),
         secret: this.configService.get(DUMMY_ENUMS.JWT_SECRET),
@@ -33,11 +39,32 @@ export class AuthService {
     );
   }
 
-  private async createRefreshToken(userId: string) {
+  private async createRefreshToken(email: string) {
     const tokenId = crypto.createHash(
       this.configService.get(DUMMY_ENUMS.HASH_ALGORITHM),
     );
-    return tokenId.update(userId).digest('hex');
+
+    return tokenId.update(email).digest('hex');
+  }
+
+  private hashField(field: string) {
+    return bcrypt.hash(field, this.configService.get(DUMMY_ENUMS.HASH_ROUNDS));
+  }
+
+  private setCookie(context: MyContext, token: string, type?: string) {
+    let key = DUMMY_ENUMS.ACCESS_TOKEN;
+    let expiry = DUMMY_ENUMS.COOKIE_ACCESS_EXPIRY;
+
+    if (type === 'refresh') {
+      (key = DUMMY_ENUMS.REFRESH_TOKEN),
+        (expiry = DUMMY_ENUMS.COOKIE_REFRESH_EXPIRY);
+    }
+
+    context.res.cookie(key, token, {
+      expires: new Date(Date.now() - -this.configService.get(expiry)),
+      sameSite: true,
+      httpOnly: true,
+    });
   }
 
   async signUp(args: SingUpInput) {
@@ -49,27 +76,39 @@ export class AuthService {
     }
 
     const newUserData = {
-      id: uuidv4(),
       email,
       name,
-      password: await bcrypt.hash(password, 12),
+      password: await this.hashField(password),
     };
 
     return this.usersService.create(newUserData);
   }
 
   async signIn(user: User) {
-    const token = await this.createAccessToken(user.id);
-    const refreshToken = await this.createRefreshToken(user.id);
+    try {
+      const token = await this.createAccessToken(user.email);
+      const refreshToken = await this.createRefreshToken(user.email);
 
-    if (!token) {
-      throw new InternalServerErrorException();
+      if (!token) {
+        throw new InternalServerErrorException();
+      }
+
+      this.usersTokensRepository.upsert(
+        {
+          user,
+          refresh_token: await this.hashField(refreshToken),
+        },
+        ['user'],
+      );
+
+      return {
+        user,
+        token,
+        refreshToken,
+      };
+    } catch (err) {
+      throw new InternalServerErrorException(err);
     }
-    return {
-      user,
-      token,
-      refreshToken,
-    };
   }
 
   async validateUser(args) {
@@ -92,25 +131,18 @@ export class AuthService {
     return userReturnData;
   }
 
-  async setCookies(context) {
+  async setAuthContext(context: MyContext) {
     const { token, refreshToken, user } = await this.signIn(context.user);
 
-    context.res.cookie(DUMMY_ENUMS.ACCESS_TOKEN, token, {
-      expires: new Date(
-        Date.now() - -this.configService.get(DUMMY_ENUMS.COOKIE_ACCESS_EXPIRY),
-      ),
-      sameSite: true,
-      httpOnly: true,
-    });
-
-    context.res.cookie(DUMMY_ENUMS.REFRESH_TOKEN, refreshToken, {
-      expires: new Date(
-        Date.now() - -this.configService.get(DUMMY_ENUMS.COOKIE_REFRESH_EXPIRY),
-      ),
-      sameSite: true,
-      httpOnly: true,
-    });
+    this.setCookie(context, token);
+    this.setCookie(context, refreshToken, 'refresh');
 
     return user;
   }
+}
+
+export interface MyContext extends GraphQLExecutionContext {
+  req: Request;
+  res: Response;
+  user: User | null;
 }

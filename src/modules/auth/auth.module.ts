@@ -3,22 +3,31 @@ import { AuthService } from './auth.service';
 import { AuthResolver } from './auth.resolver';
 import { UsersService } from 'src/modules/users/users.service';
 import { JwtModule, JwtService } from '@nestjs/jwt';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { User } from 'src/modules/users/entities/user.entity';
 import { PassportModule } from '@nestjs/passport';
 import { LocalStrategy } from './strategies/local.strategy';
 import { JWTStrategy } from './strategies/jwt.strategy';
+import { DatabaseModule } from '../database/database.module';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { Token } from './entities/token.entity';
+import { User } from '../users/entities/user.entity';
+import { UsersModule } from '../users/users.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([User]), PassportModule, JwtModule],
+  imports: [
+    DatabaseModule,
+    PassportModule,
+    JwtModule,
+    UsersModule,
+    TypeOrmModule.forFeature([Token, User]),
+  ],
   providers: [
     AuthService,
     AuthResolver,
     UsersService,
     JwtService,
-    UsersService,
     JWTStrategy,
     LocalStrategy,
   ],
+  exports: [AuthService, LocalStrategy, JWTStrategy],
 })
 export class AuthModule {}

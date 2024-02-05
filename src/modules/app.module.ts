@@ -9,14 +9,13 @@ import { ApolloDriver } from '@nestjs/apollo';
 import { ConfigModule } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
-import { AuthService } from './auth/auth.service';
 
 @Module({
   imports: [
+    DatabaseModule,
     ConfigModule.forRoot({
       isGlobal: true,
     }),
-    DatabaseModule,
     PassportModule,
     GraphQLModule.forRoot({
       autoSchemaFile: join(process.cwd(), 'src/schema/qgl'),
@@ -31,7 +30,6 @@ import { AuthService } from './auth/auth.service';
     JwtModule,
     PassportModule,
   ],
-  providers: [AuthService],
 })
 export class AppModule {
   constructor() {}
