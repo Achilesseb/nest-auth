@@ -28,13 +28,11 @@ export class AuthResolver {
     };
   }
 
-  @Mutation(() => AuthSession)
+  @Mutation(() => Boolean)
   @UseGuards(JWTAuthGuard)
-  async signOut(@Context() context: MyContext): Promise<{ user: User }> {
-    const user = await this.authService.setAuthContext(context);
+  signOut(@Context() context: MyContext): boolean {
+    this.authService.unsetAuthContext(context);
 
-    return {
-      user,
-    };
+    return true;
   }
 }

@@ -10,8 +10,8 @@ export class GraphQLAuthGuard extends AuthGuard('local') {
 
   getRequest(context: ExecutionContext) {
     const ctx = GqlExecutionContext.create(context);
-    const request = ctx.getContext();
-    request.body = ctx.getArgs().signIn;
-    return request;
+    const { req } = ctx.getContext();
+    req.body = ctx.getArgs().signIn;
+    return req;
   }
 }

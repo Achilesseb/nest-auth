@@ -19,7 +19,10 @@ export class Token {
   @JoinColumn({ name: 'user_id' })
   user: User;
 
-  @Column()
+  @Column({
+    nullable: true,
+    unique: true,
+  })
   @Field()
   refresh_token: string;
 }

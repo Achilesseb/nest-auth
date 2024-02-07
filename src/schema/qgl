@@ -14,7 +14,7 @@ input CreateUserInput {
 
 type Mutation {
   signIn(signIn: SignInInput!): AuthSession!
-  signOut: AuthSession!
+  signOut: Boolean!
   signUp(signUp: CreateUserInput!): User!
 }
 

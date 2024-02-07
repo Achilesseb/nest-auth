@@ -48,7 +48,10 @@ export class AuthService {
   }
 
   private hashField(field: string) {
-    return bcrypt.hash(field, this.configService.get(DUMMY_ENUMS.HASH_ROUNDS));
+    return bcrypt.hash(
+      field,
+      -(-this.configService.get(DUMMY_ENUMS.HASH_ROUNDS)),
+    );
   }
 
   private setCookie(context: MyContext, token: string, type?: string) {
@@ -111,6 +114,20 @@ export class AuthService {
     }
   }
 
+  signOut(user: User) {
+    try {
+      this.usersTokensRepository.upsert(
+        {
+          user,
+          refresh_token: null,
+        },
+        ['user'],
+      );
+    } catch (err) {
+      throw new InternalServerErrorException(err);
+    }
+  }
+
   async validateUser(args) {
     const { email, password } = args;
     const user = await this.usersService.findOne(email);
@@ -132,17 +149,23 @@ export class AuthService {
   }
 
   async setAuthContext(context: MyContext) {
-    const { token, refreshToken, user } = await this.signIn(context.user);
+    const { token, refreshToken, user } = await this.signIn(context.req.user);
 
     this.setCookie(context, token);
     this.setCookie(context, refreshToken, 'refresh');
 
     return user;
   }
+
+  async unsetAuthContext(context: MyContext) {
+    this.signOut(context.req.user);
+
+    this.setCookie(context, null);
+    this.setCookie(context, null, 'refresh');
+  }
 }
 
 export interface MyContext extends GraphQLExecutionContext {
-  req: Request;
+  req: Request & { user: User | null };
   res: Response;
-  user: User | null;
 }
