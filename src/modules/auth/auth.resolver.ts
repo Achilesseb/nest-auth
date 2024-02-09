@@ -6,6 +6,7 @@ import { AuthSession, SignInInput } from './dto/signIn.input';
 import { UseGuards } from '@nestjs/common';
 import { GraphQLAuthGuard } from './guards/gql-auth.guard';
 import { JWTAuthGuard } from './guards/jwt-auth.guard';
+import { RefreshAuthGuard } from './guards/refresh-auth.guard';
 
 @Resolver()
 export class AuthResolver {
@@ -31,6 +32,14 @@ export class AuthResolver {
   @Mutation(() => Boolean)
   @UseGuards(JWTAuthGuard)
   signOut(@Context() context: MyContext): boolean {
+    this.authService.unsetAuthContext(context);
+
+    return true;
+  }
+
+  @Mutation(() => Boolean)
+  @UseGuards(RefreshAuthGuard)
+  getNewTokens(@Context() context: MyContext): boolean {
     this.authService.unsetAuthContext(context);
 
     return true;

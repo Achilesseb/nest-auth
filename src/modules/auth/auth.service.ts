@@ -23,7 +23,7 @@ import { Response } from 'express';
 export class AuthService {
   constructor(
     @InjectRepository(Token)
-    private usersTokensRepository: Repository<Token>,
+    private refreshTokenRepository: Repository<Token>,
     private usersService: UsersService,
     private jwtService: JwtService,
     private configService: ConfigService,
@@ -96,7 +96,7 @@ export class AuthService {
         throw new InternalServerErrorException();
       }
 
-      this.usersTokensRepository.upsert(
+      this.refreshTokenRepository.upsert(
         {
           user,
           refresh_token: await this.hashField(refreshToken),
@@ -116,7 +116,7 @@ export class AuthService {
 
   signOut(user: User) {
     try {
-      this.usersTokensRepository.upsert(
+      this.refreshTokenRepository.upsert(
         {
           user,
           refresh_token: null,
@@ -146,6 +146,15 @@ export class AuthService {
     }
 
     return userReturnData;
+  }
+
+  async validateRefreshToken(token: string, user: string) {
+    const storedRefreshToken = await this.refreshTokenRepository.findOne({
+      where: { id: user },
+      relations: ['user'],
+    });
+
+    console.log(storedRefreshToken);
   }
 
   async setAuthContext(context: MyContext) {
