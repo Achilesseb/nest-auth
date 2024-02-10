@@ -45,4 +45,22 @@ export class AuthResolver {
     console.log('Sending new tokens to the client');
     return true;
   }
+
+  @Mutation(() => Boolean)
+  @UseGuards(JWTAuthGuard)
+  async changePassword(@Context() context: MyContext): Promise<boolean> {
+    await this.authService.setAuthContext(context);
+
+    console.log('Sending new tokens to the client');
+    return true;
+  }
+
+  @Mutation(() => Boolean)
+  @UseGuards(GraphQLAuthGuard)
+  async forgotPassword(@Context() context: MyContext): Promise<boolean> {
+    await this.authService.setAuthContext(context);
+
+    console.log('Sending new tokens to the client');
+    return true;
+  }
 }

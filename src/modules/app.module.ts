@@ -9,6 +9,7 @@ import { ApolloDriver } from '@nestjs/apollo';
 import { ConfigModule } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
+import { MailerModule } from '@nestjs-modules/mailer';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { PassportModule } from '@nestjs/passport';
     AuthModule,
     JwtModule,
     PassportModule,
+    MailerModule,
   ],
 })
 export class AppModule {

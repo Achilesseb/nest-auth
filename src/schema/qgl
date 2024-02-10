@@ -13,6 +13,8 @@ input CreateUserInput {
 }
 
 type Mutation {
+  changePassword: Boolean!
+  forgotPassword: Boolean!
   getNewTokens: Boolean!
   signIn(signIn: SignInInput!): AuthSession!
   signOut: Boolean!
