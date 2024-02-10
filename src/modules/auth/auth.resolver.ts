@@ -39,9 +39,10 @@ export class AuthResolver {
 
   @Mutation(() => Boolean)
   @UseGuards(RefreshAuthGuard)
-  getNewTokens(@Context() context: MyContext): boolean {
-    this.authService.unsetAuthContext(context);
+  async getNewTokens(@Context() context: MyContext): Promise<boolean> {
+    await this.authService.setAuthContext(context);
 
+    console.log('Sending new tokens to the client');
     return true;
   }
 }

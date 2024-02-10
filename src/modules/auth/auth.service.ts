@@ -5,8 +5,8 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { UsersService } from 'src/modules/users/users.service';
-import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
+import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { ERROR_MESSAGES } from 'src/constants/errors';
 import { User } from 'src/modules/users/entities/user.entity';
@@ -39,12 +39,14 @@ export class AuthService {
     );
   }
 
-  private async createRefreshToken(email: string) {
-    const tokenId = crypto.createHash(
-      this.configService.get(DUMMY_ENUMS.HASH_ALGORITHM),
+  private async createRefreshToken(id: string) {
+    return this.jwtService.sign(
+      { id },
+      {
+        expiresIn: this.configService.get(DUMMY_ENUMS.JWT_REFRESH_EXPIRY),
+        secret: this.configService.get(DUMMY_ENUMS.JWT_REFRESH_SECRET),
+      },
     );
-
-    return tokenId.update(email).digest('hex');
   }
 
   private hashField(field: string) {
@@ -70,6 +72,23 @@ export class AuthService {
     });
   }
 
+  private stringToCharCodeArray(stringValue: string) {
+    return stringValue.split('').map((char) => char.charCodeAt(0));
+  }
+
+  private timeConstantComparison(value: string, compareValue: string) {
+    let result: 0 | 1;
+
+    const valueChar = this.stringToCharCodeArray(value);
+    const compareValueChar = this.stringToCharCodeArray(compareValue);
+
+    for (let i = 0; i <= value.length; i++) {
+      result |= valueChar[i] ^ compareValueChar[i];
+    }
+
+    return result === 0;
+  }
+
   async signUp(args: SingUpInput) {
     const { name, password, email } = args;
     const user = await this.usersService.findOne(email);
@@ -90,7 +109,7 @@ export class AuthService {
   async signIn(user: User) {
     try {
       const token = await this.createAccessToken(user.email);
-      const refreshToken = await this.createRefreshToken(user.email);
+      const refreshToken = await this.createRefreshToken(user.id);
 
       if (!token) {
         throw new InternalServerErrorException();
@@ -99,7 +118,10 @@ export class AuthService {
       this.refreshTokenRepository.upsert(
         {
           user,
-          refresh_token: await this.hashField(refreshToken),
+          refresh_token: crypto
+            .createHash(this.configService.get(DUMMY_ENUMS.HASH_ALGORITHM))
+            .update(refreshToken)
+            .digest('hex'),
         },
         ['user'],
       );
@@ -138,7 +160,6 @@ export class AuthService {
 
     const { password: userPassword, ...userReturnData } = user;
     const match = await bcrypt.compare(password, userPassword);
-
     if (!match) {
       throw new UnauthorizedException({
         message: ERROR_MESSAGES.WRONG_CREDENTIALS,
@@ -148,13 +169,36 @@ export class AuthService {
     return userReturnData;
   }
 
-  async validateRefreshToken(token: string, user: string) {
-    const storedRefreshToken = await this.refreshTokenRepository.findOne({
-      where: { id: user },
-      relations: ['user'],
-    });
+  async validateRefreshToken(token: string, userId: string) {
+    try {
+      const { refresh_token: storedRefreshToken, user } =
+        await this.refreshTokenRepository.findOne({
+          where: { id: userId },
+          relations: ['user'],
+        });
 
-    console.log(storedRefreshToken);
+      const hasedRefreshToken = crypto
+        .createHash(this.configService.get(DUMMY_ENUMS.HASH_ALGORITHM))
+        .update(token)
+        .digest('hex');
+
+      const match = this.timeConstantComparison(
+        hasedRefreshToken,
+        storedRefreshToken,
+      );
+
+      if (!match) {
+        throw new UnauthorizedException({
+          message: ERROR_MESSAGES.INVALID_TOKEN,
+        });
+      }
+      return user;
+    } catch (err) {
+      console.log(
+        'Something went wrong while trying to validate refresh token.',
+      );
+      throw err;
+    }
   }
 
   async setAuthContext(context: MyContext) {
