@@ -19,14 +19,18 @@ export class JWTStrategy extends PassportStrategy(Strategy, 'jwt') {
   }
 
   async validate(payload: any) {
-    console.log(payload, 'inside jwt strategy');
-    const { email } = payload;
-    const user = await this.usersService.findOne(email);
+    try {
+      const { email } = payload;
+      const user = await this.usersService.findOne(email);
 
-    if (!user) {
-      throw new UnauthorizedException();
+      if (!user) {
+        throw new UnauthorizedException();
+      }
+      console.log('Succesfully validated access token.');
+      return user;
+    } catch (err) {
+      console.log('Error trying to login user.', err);
+      throw err;
     }
-
-    return user;
   }
 }
