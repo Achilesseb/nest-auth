@@ -89,7 +89,7 @@ export class AuthService {
     return result === 0;
   }
 
-  async signUp(args: SingUpInput) {
+  async signUp(args: SingUpInput): Promise<User> {
     const { name, password, email } = args;
     const user = await this.usersService.findOne(email);
 
@@ -103,7 +103,7 @@ export class AuthService {
       password: await this.hashField(password),
     };
 
-    return this.usersService.create(newUserData);
+    return this.usersService.create(newUserData) as unknown as User;
   }
 
   async signIn(user: User) {

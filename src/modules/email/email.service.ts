@@ -8,7 +8,7 @@ import { User } from '../users/entities/user.entity';
 export class EmailService {
   constructor(private mailerService: MailerService) {}
 
-  async sendUserWelcome(user: User, token: string) {
+  async sendUserWelcome(user: User, token?: string) {
     const confirmation_url = `achilesseb.com/auth/confirm?token=${token}`;
 
     await this.mailerService.sendMail({

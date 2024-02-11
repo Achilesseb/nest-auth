@@ -7,13 +7,19 @@ import { UseGuards } from '@nestjs/common';
 import { GraphQLAuthGuard } from './guards/gql-auth.guard';
 import { JWTAuthGuard } from './guards/jwt-auth.guard';
 import { RefreshAuthGuard } from './guards/refresh-auth.guard';
+import { EmailService } from '../email/email.service';
 
 @Resolver()
 export class AuthResolver {
-  constructor(private authService: AuthService) {}
+  constructor(
+    private authService: AuthService,
+    private emailService: EmailService,
+  ) {}
   @Mutation(() => User)
-  signUp(@Args('signUp') args: CreateUserInput) {
-    return this.authService.signUp(args);
+  async signUp(@Args('signUp') args: CreateUserInput) {
+    const user = await this.authService.signUp(args);
+    this.emailService.sendUserWelcome(user);
+    return user;
   }
 
   @Mutation(() => AuthSession)
